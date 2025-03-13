@@ -17,10 +17,23 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
 ]
 
+# List of proxy servers (Replace with valid proxies)
+PROXIES = [
+    "http://username:password@proxy1.com:port",
+    "http://username:password@proxy2.com:port",
+    "http://username:password@proxy3.com:port"
+]
+
 def get_zillow_data(url, listing_type):
     headers = {"User-Agent": random.choice(USER_AGENTS)}
-    response = requests.get(url, headers=headers)
-    time.sleep(random.randint(2, 5))  # Random delay to prevent blocking
+    proxy = {"http": random.choice(PROXIES), "https": random.choice(PROXIES)}
+    
+    try:
+        response = requests.get(url, headers=headers, proxies=proxy, timeout=10)
+        time.sleep(random.randint(5, 15))  # Longer delay to reduce blocking
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request failed: {e}")
+        return []
     
     if response.status_code != 200:
         st.error(f"Failed to retrieve {listing_type} data from Zillow (Status Code: {response.status_code})")
