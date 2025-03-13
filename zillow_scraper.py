@@ -6,7 +6,7 @@ import random
 import time
 
 # ScraperAPI Key (Replace with your actual API key)
-SCRAPERAPI_KEY = "YOUR_API_KEY_HERE"
+SCRAPERAPI_KEY = "ee962b440e6bee21efda5cfe1ddb7ae2"
 
 # URLs for Zillow searches
 ZILLOW_ACTIVE_URL = "https://www.zillow.com/saint-petersburg-fl/"
