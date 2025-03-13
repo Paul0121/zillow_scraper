@@ -5,6 +5,9 @@ import pandas as pd
 import random
 import time
 
+# ScraperAPI Key (Replace with your actual API key)
+SCRAPERAPI_KEY = "YOUR_API_KEY_HERE"
+
 # URLs for Zillow searches
 ZILLOW_ACTIVE_URL = "https://www.zillow.com/saint-petersburg-fl/"
 ZILLOW_SOLD_URL = "https://www.zillow.com/saint-petersburg-fl/sold/"
@@ -17,19 +20,12 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0"
 ]
 
-# List of proxy servers (Replace with valid proxies)
-PROXIES = [
-    "http://username:password@proxy1.com:port",
-    "http://username:password@proxy2.com:port",
-    "http://username:password@proxy3.com:port"
-]
-
 def get_zillow_data(url, listing_type):
     headers = {"User-Agent": random.choice(USER_AGENTS)}
-    proxy = {"http": random.choice(PROXIES), "https": random.choice(PROXIES)}
+    scraper_url = f"https://api.scraperapi.com/?api_key={SCRAPERAPI_KEY}&url={url}"
     
     try:
-        response = requests.get(url, headers=headers, proxies=proxy, timeout=10)
+        response = requests.get(scraper_url, headers=headers, timeout=10)
         time.sleep(random.randint(5, 15))  # Longer delay to reduce blocking
     except requests.exceptions.RequestException as e:
         st.error(f"Request failed: {e}")
