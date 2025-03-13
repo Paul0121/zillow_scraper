@@ -1,0 +1,79 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+
+# URLs for Zillow searches (Active, Sold, and Off-Market listings)
+ZILLOW_ACTIVE_URL = "https://www.zillow.com/saint-petersburg-fl/"
+ZILLOW_SOLD_URL = "https://www.zillow.com/saint-petersburg-fl/sold/"
+ZILLOW_OFFMARKET_URL = "https://www.zillow.com/saint-petersburg-fl/off-market/"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+}
+
+def get_zillow_data(url, listing_type):
+    response = requests.get(url, headers=HEADERS)
+    if response.status_code != 200:
+        print(f"Failed to retrieve {listing_type} data from Zillow")
+        return []
+    
+    soup = BeautifulSoup(response.text, "html.parser")
+    properties = []
+    
+    # Zillow listings have structured data within <article> tags
+    listings = soup.find_all("article")
+    
+    for listing in listings:
+        try:
+            price = listing.find("span", class_="PropertyCardWrapper__StyledPriceLine").text.strip()
+            address = listing.find("address").text.strip()
+            beds = listing.find("ul", class_="PropertyCardWrapper__CardDetails").find_all("li")[0].text.strip()
+            baths = listing.find("ul", class_="PropertyCardWrapper__CardDetails").find_all("li")[1].text.strip()
+            sqft = listing.find("ul", class_="PropertyCardWrapper__CardDetails").find_all("li")[2].text.strip()
+            
+            properties.append({
+                "Type": listing_type,
+                "Price": price,
+                "Address": address,
+                "Beds": beds,
+                "Baths": baths,
+                "SqFt": sqft
+            })
+        except Exception as e:
+            print("Skipping a property due to missing data.")
+            continue
+    
+    return properties
+
+def calculate_arv(sold_listings, subject_property):
+    # Find comps: Similar properties based on beds, baths, and sqft
+    comparable_sales = [p for p in sold_listings if p['Beds'] == subject_property['Beds'] and p['Baths'] == subject_property['Baths']]
+    
+    if not comparable_sales:
+        return "No comps available"
+    
+    # Calculate ARV as the average price of comparable sales
+    prices = [int(p['Price'].replace("$", "").replace(",", "")) for p in comparable_sales]
+    arv = sum(prices) / len(prices)
+    return f"${arv:,.2f}"
+
+# Fetch property data
+data_active = get_zillow_data(ZILLOW_ACTIVE_URL, "Active Listing")
+data_sold = get_zillow_data(ZILLOW_SOLD_URL, "Sold Listing")
+data_offmarket = get_zillow_data(ZILLOW_OFFMARKET_URL, "Off-Market")
+
+# Combine all property data
+data = data_active + data_sold + data_offmarket
+
+# Calculate ARV for active properties
+for property in data_active:
+    property["Estimated ARV"] = calculate_arv(data_sold, property)
+
+# Save to CSV
+if data:
+    df = pd.DataFrame(data)
+    df.to_csv("zillow_properties.csv", index=False)
+    print("Data saved to zillow_properties.csv")
+else:
+    print("No data retrieved.")
