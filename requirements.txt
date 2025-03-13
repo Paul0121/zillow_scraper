@@ -2,4 +2,3 @@ streamlit
 selenium
 webdriver-manager
 pandas
-pip install streamlit selenium webdriver-manager pandas
